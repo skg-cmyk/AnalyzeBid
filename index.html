@@ -68,22 +68,12 @@
       font-weight: 500;
     }
 
-    input[type="file"] {
-      background: #f7f9fa;
-      border: 1px solid #e6e8ec;
-      padding: 8px 6px;
-      border-radius: 6px;
-      font-size: 0.97rem;
-    }
-
-    .duration-group {
-      display: flex;
-      gap: 8px;
-    }
-
+    input[type="file"],
     input[type="number"],
-    select,
-    input[type="email"] {
+    input[type="email"],
+    input[type="text"],
+    input[type="password"],
+    select {
       width: 100%;
       background: #f7f9fa;
       border: 1px solid #e6e8ec;
@@ -95,17 +85,19 @@
       box-sizing: border-box;
     }
 
+    .duration-group {
+      display: flex;
+      gap: 8px;
+    }
+
     select {
       width: 40%;
       min-width: 70px;
-      font-size: 1rem;
       padding: 9px 6px;
       margin-top: 2px;
     }
 
-    input[type="number"]:focus,
-    select:focus,
-    input[type="email"]:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: #5284ff;
     }
@@ -194,14 +186,22 @@
         <label for="email">Your Email</label>
         <input type="email" id="email" name="email" required placeholder="you@example.com">
       </div>
+      <div>
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required placeholder="Enter username">
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required placeholder="Enter password">
+      </div>
       <button type="submit">Submit</button>
     </form>
     <div id="message" class="message" style="display:none"></div>
   </div>
 
   <script>
-    // Replace with your production webhook URL
-    const N8N_WEBHOOK_URL = "https://shd-2025.app.n8n.cloud/webhook-test/AnalyzeBid";
+    // Replace with your n8n production webhook URL
+    const N8N_WEBHOOK_URL = "https://shd-2025.app.n8n.cloud/webhook/AnalyzeBid";
 
     const form = document.getElementById('projectForm');
     const messageDiv = document.getElementById('message');
@@ -215,6 +215,8 @@
       const durationValue = form['duration-value'].value;
       const durationUnit = form['duration-unit'].value;
       const email = form.email.value.trim();
+      const username = form.username.value.trim();
+      const password = form.password.value.trim();
 
       if (!pdfFile || pdfFile.type !== 'application/pdf') {
         showMessage('Please upload a valid PDF file.', 'error');
@@ -232,12 +234,18 @@
         showMessage('Please enter a valid email address.', 'error');
         return;
       }
+      if (!username || !password) {
+        showMessage('Please enter username and password.', 'error');
+        return;
+      }
 
       const formData = new FormData();
       formData.append('pdf', pdfFile);
       formData.append('duration_value', durationValue);
       formData.append('duration_unit', durationUnit);
       formData.append('email', email);
+      formData.append('username', username);
+      formData.append('password', password);
 
       try {
         const response = await fetch(N8N_WEBHOOK_URL, {
