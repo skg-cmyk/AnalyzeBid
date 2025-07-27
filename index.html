@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Your Project</title>
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: #f5f6fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 380px;
+      padding: 32px 28px 24px 28px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 6px 24px 0 rgba(50, 50, 93, 0.08), 0 1.5px 4px 0 rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      margin: 0 0 20px 0;
+      font-size: 1.45rem;
+      color: #212529;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      text-align: center;
+    }
+
+    form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    label {
+      font-size: 0.98rem;
+      color: #444;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="file"] {
+      background: #f7f9fa;
+      border: 1px solid #e6e8ec;
+      padding: 8px 6px;
+      border-radius: 6px;
+      font-size: 0.97rem;
+    }
+
+    input[type="number"],
+    input[type="email"] {
+      width: 100%;
+      background: #f7f9fa;
+      border: 1px solid #e6e8ec;
+      padding: 9px 10px;
+      border-radius: 6px;
+      font-size: 1rem;
+      margin-top: 2px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus,
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #5284ff;
+    }
+
+    button[type="submit"] {
+      margin-top: 8px;
+      background: linear-gradient(90deg, #5284ff 0%, #3565e0 100%);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 12px 0;
+      font-size: 1.04rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow: 0 2px 8px 0 rgba(80, 120, 240, 0.07);
+      transition: background 0.2s;
+    }
+
+    button[type="submit"]:hover {
+      background: linear-gradient(90deg, #3565e0 0%, #5284ff 100%);
+    }
+
+    .message {
+      margin-top: 18px;
+      width: 100%;
+      text-align: center;
+      font-size: 1.04rem;
+      font-weight: 500;
+      border-radius: 6px;
+      padding: 12px 0;
+    }
+    .message.success {
+      background: #e5f8ec;
+      color: #1b7a3c;
+      border: 1px solid #b8e8ce;
+    }
+    .message.error {
+      background: #ffe8e8;
+      color: #c12b2b;
+      border: 1px solid #ffc8c8;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 18px 7vw 14px 7vw;
+        max-width: 98vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Submit Your Project</h2>
+    <form id="projectForm" autocomplete="off" novalidate>
+      <div>
+        <label for="pdf">Project PDF</label>
+        <input type="file" id="pdf" name="pdf" accept="application/pdf" required>
+      </div>
+      <div>
+        <label for="duration">Project Duration (days)</label>
+        <input type="number" id="duration" name="duration" min="1" required placeholder="e.g., 30">
+      </div>
+      <div>
+        <label for="email">Your Email</label>
+        <input type="email" id="email" name="email" required placeholder="you@example.com">
+      </div>
+      <button type="submit">Submit</button>
+    </form>
+    <div id="message" class="message" style="display:none"></div>
+  </div>
+
+  <script>
+    // Change this to your actual n8n webhook URL:
+    const N8N_WEBHOOK_URL = "https://your-n8n-instance.example/webhook/your-project-submit";
+
+    const form = document.getElementById('projectForm');
+    const messageDiv = document.getElementById('message');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      // Clear previous messages
+      messageDiv.style.display = 'none';
+      messageDiv.className = 'message';
+
+      const pdfFile = form.pdf.files[0];
+      const duration = form.duration.value;
+      const email = form.email.value.trim();
+
+      // Basic validation (in addition to HTML5)
+      if (!pdfFile || pdfFile.type !== 'application/pdf') {
+        showMessage('Please upload a valid PDF file.', 'error');
+        return;
+      }
+      if (!duration || duration <= 0) {
+        showMessage('Please enter a valid project duration.', 'error');
+        return;
+      }
+      if (!email || !validateEmail(email)) {
+        showMessage('Please enter a valid email address.', 'error');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('pdf', pdfFile);
+      formData.append('duration', duration);
+      formData.append('email', email);
+
+      try {
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Submission failed');
+        }
+
+        showMessage('Your project has been submitted!', 'success');
+        form.reset();
+      } catch (error) {
+        showMessage('An error occurred while submitting. Please try again.', 'error');
+      }
+    });
+
+    function showMessage(msg, type) {
+      messageDiv.textContent = msg;
+      messageDiv.className = 'message ' + type;
+      messageDiv.style.display = 'block';
+    }
+
+    function validateEmail(email) {
+      // Simple email validation
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+  </script>
+</body>
+</html>
