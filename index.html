@@ -192,84 +192,75 @@
   </div>
 
   <script>
-    // Replace with your n8n production webhook URL
-    const N8N_WEBHOOK_URL = "https://shd-2025.app.n8n.cloud/webhook-test/AnalyzeBid";
+  // Replace with your public n8n webhook URL (no auth needed)
+  const N8N_WEBHOOK_URL = "https://shd-2025.app.n8n.cloud/webhook-test/AnalyzeBid";
 
-    // Replace with your Basic Auth credentials
-    const N8N_USER = "your-username";
-    const N8N_PASS = "your-password";
+  const form = document.getElementById('projectForm');
+  const messageDiv = document.getElementById('message');
 
-    const form = document.getElementById('projectForm');
-    const messageDiv = document.getElementById('message');
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    messageDiv.style.display = 'none';
+    messageDiv.className = 'message';
 
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      messageDiv.style.display = 'none';
-      messageDiv.className = 'message';
+    const pdfFile = form.pdf.files[0];
+    const durationValue = form['duration-value'].value;
+    const durationUnit = form['duration-unit'].value;
+    const email = form.email.value.trim();
 
-      const pdfFile = form.pdf.files[0];
-      const durationValue = form['duration-value'].value;
-      const durationUnit = form['duration-unit'].value;
-      const email = form.email.value.trim();
-
-      if (!pdfFile || pdfFile.type !== 'application/pdf') {
-        showMessage('Please upload a valid PDF file.', 'error');
-        return;
-      }
-      if (!durationValue || durationValue <= 0) {
-        showMessage('Please enter a valid project duration.', 'error');
-        return;
-      }
-      if (!durationUnit) {
-        showMessage('Please select a valid duration unit.', 'error');
-        return;
-      }
-      if (!validateEmail(email)) {
-        showMessage('Please enter a valid email address.', 'error');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('pdf', pdfFile);
-      formData.append('duration_value', durationValue);
-      formData.append('duration_unit', durationUnit);
-      formData.append('email', email);
-
-      try {
-        const authHeader = 'Basic ' + btoa(N8N_USER + ':' + N8N_PASS);
-
-        const response = await fetch(N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': authHeader
-          },
-          body: formData,
-        });
-
-        const text = await response.text();
-        console.log("Server response:", text);
-
-        if (!response.ok) {
-          throw new Error(text || 'Submission failed');
-        }
-
-        showMessage('Your BOQ has been submitted successfully!', 'success');
-        form.reset();
-      } catch (error) {
-        console.error("Error during submission:", error);
-        showMessage('An error occurred: ' + error.message, 'error');
-      }
-    });
-
-    function showMessage(msg, type) {
-      messageDiv.textContent = msg;
-      messageDiv.className = 'message ' + type;
-      messageDiv.style.display = 'block';
+    if (!pdfFile || pdfFile.type !== 'application/pdf') {
+      showMessage('Please upload a valid PDF file.', 'error');
+      return;
+    }
+    if (!durationValue || durationValue <= 0) {
+      showMessage('Please enter a valid project duration.', 'error');
+      return;
+    }
+    if (!durationUnit) {
+      showMessage('Please select a valid duration unit.', 'error');
+      return;
+    }
+    if (!validateEmail(email)) {
+      showMessage('Please enter a valid email address.', 'error');
+      return;
     }
 
-    function validateEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const formData = new FormData();
+    formData.append('pdf', pdfFile);
+    formData.append('duration_value', durationValue);
+    formData.append('duration_unit', durationUnit);
+    formData.append('email', email);
+
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const text = await response.text();
+      console.log("Server response:", text);
+
+      if (!response.ok) {
+        throw new Error(text || 'Submission failed');
+      }
+
+      showMessage('Your BOQ has been submitted successfully!', 'success');
+      form.reset();
+    } catch (error) {
+      console.error("Error during submission:", error);
+      showMessage('An error occurred: ' + error.message, 'error');
     }
-  </script>
+  });
+
+  function showMessage(msg, type) {
+    messageDiv.textContent = msg;
+    messageDiv.className = 'message ' + type;
+    messageDiv.style.display = 'block';
+  }
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+</script>
 </body>
 </html>
